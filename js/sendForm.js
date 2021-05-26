@@ -29,18 +29,16 @@ const messageAlert = (form, text, color) => {
         item.style.opacity = '1';
         item.disabled = false;
         form.removeChild(form.lastElementChild);
-        form.reset();
       }
     }
   }, 5000);
 };
 
-const formElems = document.querySelectorAll('.form');
-
 const formHandler = (form) => {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const data = {};
+    let flag = true;
     for (const item of form.elements) {
       if (item.type === 'submit') {
         item.disabled = true;
@@ -51,17 +49,22 @@ const formHandler = (form) => {
       const { name, value } = item;
 
       if (name) {
-        if (!value || value.trim() === '') {
-          messageAlert(
-            form,
-            `Вы ничего не ввели или ввели одни пробелы`,
-            'red'
-          );
-          return;
+        if (value.trim()) {
+          item.style.border = '';
+          data[name] = value.trim();
+        } else {
+          item.style.border = '1px solid red';
+          flag = false;
+          item.value = '';
         }
       }
-      data[name] = value;
     }
+
+    if (!flag) {
+      messageAlert(form, `Вы ничего не ввели или ввели одни пробелы`, 'red');
+      return;
+    }
+
     sendData(
       JSON.stringify(data),
       (id) => {
@@ -70,6 +73,7 @@ const formHandler = (form) => {
           `Ваша заявка № ${id} !\nВ ближайшее время с вами свяжемся`,
           'green'
         );
+        form.reset();
       },
       (err) => {
         messageAlert(
@@ -77,9 +81,13 @@ const formHandler = (form) => {
           'На сервере технические неполадки, попробуйте отправить заявку в следующий раз',
           'red'
         );
+        form.reset();
       }
     );
   });
 };
 
-formElems.forEach(formHandler);
+export default function SendForm() {
+  const formElems = document.querySelectorAll('.form');
+  formElems.forEach(formHandler);
+}
